@@ -12,6 +12,12 @@ public class Tetris extends JPanel implements Runnable {
     static final int EMPTY = -1;
     static final int BORDER = -2;
 
+    final int[][] grid = new int[Row][Col];
+
+    Thread fThread;
+    
+    static final Random rand = new Random();
+
     enum Direction {
         right(1, 0), down(0, 1), left(-1, 0);
 
@@ -22,9 +28,11 @@ public class Tetris extends JPanel implements Runnable {
         final int x, y;
     };
 
+    //落ちるミノの形状
     Shape fShape;
     Shape nShape;
 
+    //ミノの落ちる座標
     int fShapeRow;
     int fShapeCol;
 
@@ -53,13 +61,7 @@ public class Tetris extends JPanel implements Runnable {
         final int[][] pos, shape;
     }
 
-    final int[][] grid = new int[Row][Col];
-
-    Thread fThread;
-    
-    static final Random rand = new Random();
-
-    public void Grid() {
+    public void grid() {
         for(int g = 0; g < Row; g++) {
             Arrays.fill(grid[g], EMPTY);
             for(int b = 0; b <Col; b++) {
@@ -82,12 +84,53 @@ public class Tetris extends JPanel implements Runnable {
     }
 
     public Tetris() {
-        Grid();
+        grid();
         choiceShape();
 
         setFocusable(true);
         setPreferredSize(dim);
         setBackground(backgroundColor);
+
+
+        addKeyListener(new KeyAdapter() {
+            boolean hardDrop;
+
+            @Override
+            public void keyPressed(KeyEvent e) {
+                startGame();
+                repaint();
+
+                switch (e.getKeyCode()) {
+                    case KeyEvent.VK_UP:
+                        if(rotatable(fShape))
+                            rotate(fShape);
+                        break;
+
+                    case KeyEvent.VK_RIGHT:
+                        if(movable(fShape))
+                            move(Direction.right);
+
+                    case KeyEvent.VK_LEFT:
+                        if(movable(fShape))
+                            move(Direction.left);
+                        break;
+
+                    case KeyEvent.VK_DOWN:
+                        if(!hardDrop) {
+                            hardDrop = true;
+                            while (movable(fShape, Direction.down)) {
+                                move(Direction.down);
+                                repaint();
+                            }
+                        }
+                }
+                repaint();
+            }
+            @Override
+            public void keyReleased(KeyEvent e) {
+                hardDrop = false;
+            }
+        });
     }
 
     
